@@ -1,17 +1,15 @@
-// server/index.js
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 
-// Load env variables
 require("dotenv").config();
 
-// Import routes
+// Routes
 const userRouter = require("./routes/user-routes");
 const taskRouter = require("./routes/task-routes");
 
-// Connect to database
+// DB
 require("./database");
 
 const app = express();
@@ -19,8 +17,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"], // frontend dev server
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "https://task-manager-11-l1c7.onrender.com", // allow all origins, or set specific one via env
     credentials: true,
   })
 );
@@ -37,7 +34,7 @@ app.get("/api", (req, res) => {
   res.status(200).json({ message: "Hello Express" });
 });
 
-// Serve frontend (production build)
+// Serve frontend (production)
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/dist")));
   app.get("*", (req, res) => {
@@ -45,6 +42,5 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Start server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`🚀 App is now running at port ${PORT}...`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 App running on port ${PORT}...`));
