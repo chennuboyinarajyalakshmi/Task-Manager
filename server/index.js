@@ -14,10 +14,10 @@ require("./database");
 
 const app = express();
 
-// ✅ Allowed origins (local + frontend on Render)
+// ✅ Allowed origins (local + frontend from .env)
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://task-board-frontend-dc1q.onrender.com", // your deployed frontend
+  process.env.CLIENT_URL, // frontend on Render
 ];
 
 // Middleware
