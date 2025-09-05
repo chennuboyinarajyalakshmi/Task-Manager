@@ -17,107 +17,79 @@ const loginSchema = Joi.object({
 
 // JWT Token generator
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || "DEFAULT_SECRET_KEY", {
-    expiresIn: "3d", // 3 days
-  });
+  return jwt.sign(
+    { userId },
+    process.env.JWT_SECRET || "DEFAULT_SECRET_KEY",
+    { expiresIn: "3d" }
+  );
 };
+
+// COOKIE OPTIONS
+const getCookieOptions = () => ({
+  httpOnly: true,                                 // safer: frontend JS cannot read cookie
+  secure: process.env.NODE_ENV === "production", // only send over HTTPS in prod
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  maxAge: 3 * 24 * 60 * 60 * 1000,               // 3 days
+});
 
 // REGISTER USER
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body; // remove await here, req.body is not a Promise
+  const { name, email, password } = req.body;
 
   const { error } = registerSchema.validate({ name, email, password });
-  if (error) {
+  if (error)
     return res.status(400).json({ success: false, message: error.details[0].message });
-  }
 
   try {
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "User email already exists! Please try a different email",
-      });
-    }
+    if (existingUser)
+      return res.status(400).json({ success: false, message: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 12);
-
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
+    const newUser = await User.create({ name, email, password: hashedPassword });
 
     const token = generateToken(newUser._id);
-
-    // Set cookie for HTTPS & cross-origin
-    res.cookie("token", token, {
-      httpOnly: true,      // safer: frontend JS cannot read cookie
-      secure: true,        // only HTTPS
-      sameSite: "None",    // allow cross-origin requests
-      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
-    });
+    res.cookie("token", token, getCookieOptions());
 
     return res.status(201).json({
       success: true,
-      message: "User registration successful",
-      userData: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-      },
+      message: "User registered successfully",
+      userData: { _id: newUser._id, name: newUser.name, email: newUser.email },
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: "Server error. Try again." });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 // LOGIN USER
 const loginUser = async (req, res) => {
-  const { email, password } = req.body; // remove await here
+  const { email, password } = req.body;
 
   const { error } = loginSchema.validate({ email, password });
-  if (error) {
+  if (error)
     return res.status(400).json({ success: false, message: error.details[0].message });
-  }
 
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ success: false, message: "Incorrect email or password" });
-    }
+    if (!user) return res.status(400).json({ success: false, message: "Invalid credentials" });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ success: false, message: "Incorrect email or password" });
-    }
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return res.status(400).json({ success: false, message: "Invalid credentials" });
 
     const token = generateToken(user._id);
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     return res.status(200).json({ success: true, message: "User logged in" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: "Server error. Try again." });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 // LOGOUT USER
 const logout = async (req, res) => {
-  res.cookie("token", "", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    maxAge: 0,
-  });
-
+  res.cookie("token", "", { ...getCookieOptions(), maxAge: 0 });
   return res.status(200).json({ success: true, message: "Logout successful" });
 };
 
