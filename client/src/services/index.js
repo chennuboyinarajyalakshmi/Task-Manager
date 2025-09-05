@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // backend URL from .env
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_BASE_URL, // your backend URL from .env
+  withCredentials: true, // important: send cookies with requests
 });
 
 // USER APIs
@@ -17,12 +17,12 @@ export const callLoginUserApi = async (formData) => {
 };
 
 export const callUserAuthApi = async () => {
-  const response = await API.post("/api/user/auth", {});
+  const response = await API.get("/api/user/auth"); // use GET for auth check
   return response.data;
 };
 
 export const callLogoutApi = async () => {
-  const response = await API.post("/api/user/logout", {});
+  const response = await API.post("/api/user/logout");
   return response.data;
 };
 
@@ -46,3 +46,5 @@ export const deleteTaskApi = async (taskId) => {
   const response = await API.delete(`/api/task/delete-task/${taskId}`);
   return response.data;
 };
+
+export default API;
