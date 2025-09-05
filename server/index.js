@@ -8,12 +8,12 @@ require("dotenv").config();
 const userRouter = require("./routes/user-routes");
 const taskRouter = require("./routes/task-routes");
 
-// DB
+// Database
 require("./database");
 
 const app = express();
 
-// Allowed origins from ENV (comma separated)
+// Allowed origins
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
