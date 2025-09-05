@@ -1,4 +1,3 @@
-// server/index.js
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -16,20 +15,25 @@ const app = express();
 // Allowed origins from ENV (comma separated)
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
+// CORS setup
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Allow requests with no origin (like Postman)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true,
+    credentials: true, // important for cookies
   })
 );
 
+// Cookie parser
 app.use(cookieParser());
+
+// JSON body parser
 app.use(express.json());
 
 // API routes
