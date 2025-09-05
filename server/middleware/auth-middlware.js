@@ -1,41 +1,36 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user"); // capital U
+const user = require("../models/user");
 
 const userAuthVerification = async (req, res) => {
   const token = req.cookies.token;
   console.log(token, "token");
-
   if (!token) {
-    return res.status(401).json({
+    return res.json({
       success: false,
-      message: "Token is not available or invalid",
+      message: "Token is not available or Invalid token",
     });
   }
 
-  try {
-    const decoded = jwt.verify(token, "DEFAULT_SECRET_KEY");
-    console.log(decoded, "decoded");
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, "DEFAULT_SECRET_KEY");
 
-    const userInfo = await User.findById(decoded.getId);
-    console.log(userInfo, "userInfo");
+      console.log(decoded, "decoded");
+      const userInfo = await user.findById(decoded.getId);
 
-    if (!userInfo) {
-      return res.status(404).json({
+      console.log(userInfo, "userInfo");
+
+      if (userInfo)
+        return res.status(200).json({
+          success: true,
+          userInfo,
+        });
+    } catch (error) {
+      return res.status(401).json({
         success: false,
-        message: "User not found",
+        message: "User not authenticated",
       });
     }
-
-    return res.status(200).json({
-      success: true,
-      userInfo,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(401).json({
-      success: false,
-      message: "User not authenticated",
-    });
   }
 };
 
