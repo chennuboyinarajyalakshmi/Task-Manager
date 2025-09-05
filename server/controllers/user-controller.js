@@ -3,10 +3,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-//to register an user
-//to login an user
-//logout
-
+// Schemas
 const registerSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
@@ -18,135 +15,110 @@ const loginSchema = Joi.object({
   password: Joi.string().min(6).required(),
 });
 
-const generateToken = (getId) => {
-  return jwt.sign({ getId }, "DEFAULT_SECRET_KEY", {
-    expiresIn: 3 * 24 * 60 * 60,
+// JWT Token generator
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || "DEFAULT_SECRET_KEY", {
+    expiresIn: "3d", // 3 days
   });
 };
 
-const registerUser = async (req, res, next) => {
-  const { name, email, password } = await req.body;
+// REGISTER USER
+const registerUser = async (req, res) => {
+  const { name, email, password } = req.body; // remove await here, req.body is not a Promise
 
   const { error } = registerSchema.validate({ name, email, password });
-
   if (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.details[0].message,
-    });
+    return res.status(400).json({ success: false, message: error.details[0].message });
   }
 
   try {
-    const isUserEmailAlreadyExists = await User.findOne({ email });
-
-    if (isUserEmailAlreadyExists) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User email already exists! Please try with different email",
+        message: "User email already exists! Please try a different email",
       });
-    } else {
-      const hashPassword = await bcrypt.hash(password, 12);
-
-      const newlyCreatedUser = await User.create({
-        name,
-        email,
-        password: hashPassword,
-      });
-
-      if (newlyCreatedUser) {
-        const token = generateToken(newlyCreatedUser?._id);
-
-        res.cookie("token", token, {
-          withCredentials: true,
-          httpOnly: false,
-        });
-
-        res.status(201).json({
-          success: true,
-          message: "User registration successful",
-          userData: {
-            name: newlyCreatedUser.name,
-            email: newlyCreatedUser.email,
-            _id: newlyCreatedUser._id,
-          },
-        });
-
-        next();
-      }
     }
-  } catch (error) {
-    console.log(error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong! Please try again",
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
     });
+
+    const token = generateToken(newUser._id);
+
+    // Set cookie for HTTPS & cross-origin
+    res.cookie("token", token, {
+      httpOnly: true,      // safer: frontend JS cannot read cookie
+      secure: true,        // only HTTPS
+      sameSite: "None",    // allow cross-origin requests
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User registration successful",
+      userData: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error. Try again." });
   }
 };
 
-const loginUser = async (req, res, next) => {
-  const { password, email } = await req.body;
+// LOGIN USER
+const loginUser = async (req, res) => {
+  const { email, password } = req.body; // remove await here
 
   const { error } = loginSchema.validate({ email, password });
-
   if (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.details[0].message,
-    });
+    return res.status(400).json({ success: false, message: error.details[0].message });
   }
 
   try {
-    const getUser = await User.findOne({ email });
-
-    if (!getUser) {
-      return res.json({
-        message: "Incorrect email",
-        success: false,
-      });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Incorrect email or password" });
     }
 
-    const checkAuth = await bcrypt.compare(password, getUser.password);
-
-    if (!checkAuth) {
-      return res.json({
-        message: "Incorrect password",
-        success: false,
-      });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ success: false, message: "Incorrect email or password" });
     }
 
-    const token = generateToken(getUser?._id);
+    const token = generateToken(user._id);
+
     res.cookie("token", token, {
-      withCredentials: true,
-      httpOnly: false,
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(201).json({
-      success: true,
-      message: "User logged in",
-    });
-
-    next();
-  } catch (error) {
-    console.log(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong! Please try again",
-    });
+    return res.status(200).json({ success: true, message: "User logged in" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error. Try again." });
   }
 };
 
+// LOGOUT USER
 const logout = async (req, res) => {
   res.cookie("token", "", {
-    withCredentials: true,
-    httpOnly: false,
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    maxAge: 0,
   });
 
-  return res.status(200).json({
-    success: true,
-    message: "Logout successfully",
-  });
+  return res.status(200).json({ success: true, message: "Logout successful" });
 };
 
 module.exports = { registerUser, loginUser, logout };
