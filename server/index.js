@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
-
 require("dotenv").config();
 
 // Routes
@@ -14,7 +13,7 @@ require("./database");
 
 const app = express();
 
-// ✅ Allowed origins from ENV (comma separated list)
+// Allowed origins from ENV (comma separated)
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
@@ -42,7 +41,7 @@ app.get("/api", (req, res) => {
   res.status(200).json({ message: "Hello Express" });
 });
 
-// Serve frontend (production build)
+// Serve frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/dist")));
   app.get("*", (req, res) => {
