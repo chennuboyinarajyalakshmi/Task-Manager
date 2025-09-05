@@ -14,10 +14,22 @@ require("./database");
 
 const app = express();
 
+// ✅ Allowed origins (local + frontend on Render)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://task-board-frontend-dc1q.onrender.com", // your deployed frontend
+];
+
 // Middleware
 app.use(
   cors({
-    origin: "https://task-manager-11-l1c7.onrender.com", // allow all origins, or set specific one via env
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -34,7 +46,7 @@ app.get("/api", (req, res) => {
   res.status(200).json({ message: "Hello Express" });
 });
 
-// Serve frontend (production)
+// Serve frontend (production build)
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/dist")));
   app.get("*", (req, res) => {
