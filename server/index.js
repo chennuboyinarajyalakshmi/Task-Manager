@@ -1,19 +1,19 @@
+// server/index.js
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const path = require("path");
 require("dotenv").config();
 
 // Routes
 const userRouter = require("./routes/user-routes");
 const taskRouter = require("./routes/task-routes");
 
-// Database
+// Database connection
 require("./database");
 
 const app = express();
 
-// Allowed origins
+// Allowed origins from ENV (comma separated)
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
@@ -38,16 +38,9 @@ app.use("/api/task", taskRouter);
 
 // Test route
 app.get("/api", (req, res) => {
-  res.status(200).json({ message: "Hello Express" });
+  res.status(200).json({ message: "Backend is working" });
 });
 
-// Serve frontend in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../client/dist")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../client/dist", "index.html"));
-  });
-}
-
+// PORT
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 App running on port ${PORT}...`));
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}...`));
