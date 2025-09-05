@@ -1,4 +1,3 @@
-
 const express = require("express");
 const userRouter = express.Router();
 
@@ -7,7 +6,6 @@ const {
   loginUser,
   logout,
 } = require("../controllers/user-controller");
-
 const { userAuthVerification } = require("../middleware/auth-middlware");
 
 userRouter.post("/register", registerUser);
