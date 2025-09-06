@@ -17,9 +17,10 @@ export const callLoginUserApi = async (formData) => {
 };
 
 export const callUserAuthApi = async () => {
-  const response = await API.get("/api/user/auth"); // use GET for auth check
+  const response = await API.post("/api/user/auth");
   return response.data;
 };
+
 
 export const callLogoutApi = async () => {
   const response = await API.post("/api/user/logout");
