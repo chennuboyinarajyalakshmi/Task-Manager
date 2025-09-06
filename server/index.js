@@ -16,8 +16,8 @@ const app = express();
 
 // ✅ CORS: allow local dev + production
 const allowedOrigins = [
-  "http://localhost:5173", // local frontend
-  process.env.FRONTEND_URL, // e.g. https://task-manager-11-l1c7.onrender.com
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
 ];
 
 app.use(
@@ -45,14 +45,14 @@ app.get("/api", (req, res) => {
   res.status(200).json({ message: "Hello Express" });
 });
 
-const __dirname1 = path.resolve();
+const __dirname = path.resolve();
 
-// ✅ Serve frontend (production only)
+// ✅ Serve frontend (production)
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname1, "client", "dist")));
+  app.use(express.static(path.join(__dirname, "../client/dist")));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname1, "client", "dist", "index.html"));
+    res.sendFile(path.resolve(__dirname, "../client/dist", "index.html"));
   });
 }
 
