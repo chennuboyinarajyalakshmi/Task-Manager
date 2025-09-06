@@ -10,13 +10,14 @@ const { userAuthVerification } = require("../middleware/auth-middlware");
 
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
-userRouter.post("/auth", userAuthVerification, (req, res) => {
+userRouter.get("/auth", userAuthVerification, (req, res) => {
   res.json({
     success: true,
     message: "User authenticated",
-    user: req.user,   // comes from middleware
+    user: req.user,
   });
 });
+
 
 userRouter.post("/logout", logout);
 
