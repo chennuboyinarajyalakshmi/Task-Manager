@@ -15,12 +15,10 @@ export const callLoginUserApi = async (formData) => {
   const response = await API.post("/api/user/login", formData);
   return response.data;
 };
-
 export const callUserAuthApi = async () => {
-  const response = await API.post("/api/user/auth");
+  const response = await API.get("/api/user/auth"); // 🚨 using GET
   return response.data;
 };
-
 
 export const callLogoutApi = async () => {
   const response = await API.post("/api/user/logout");
