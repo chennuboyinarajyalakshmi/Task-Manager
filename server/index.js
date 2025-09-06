@@ -1,44 +1,48 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const path = require("path");
+
 require("dotenv").config();
 
 // Routes
 const userRouter = require("./routes/user-routes");
 const taskRouter = require("./routes/task-routes");
 
-// Database connection
+// DB
 require("./database");
 
 const app = express();
 
-// Allowed origins from ENV
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
-
-// CORS
+// Middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-      else callback(new Error("Not allowed by CORS"));
-    },
+    origin: "https://task-manager-11-l1c7.onrender.com", // allow all origins, or set specific one via env
     credentials: true,
   })
 );
 
-// Cookie parser
 app.use(cookieParser());
-
-// JSON parser
 app.use(express.json());
 
-// Routes
+// API routes
 app.use("/api/user", userRouter);
 app.use("/api/task", taskRouter);
 
-// Test
-app.get("/api", (req, res) => res.json({ message: "Backend is working" }));
+// Test route
+app.get("/api", (req, res) => {
+  res.status(200).json({ message: "Hello Express" });
+});
 
-// PORT
+const __dirname=path.resolve();
+
+// Serve frontend (production)
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../client/dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../client/dist", "index.html"));
+  });
+}
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}...`));
+app.listen(PORT, () => console.log(`🚀 App running on port ${PORT}...`));
