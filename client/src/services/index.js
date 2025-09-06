@@ -1,43 +1,50 @@
 // src/services/index.js
 import axios from "axios";
 
-// ✅ Create axios instance with baseURL = "/api"
-// When deployed, frontend and backend will share the same domain,
-// so "/api" automatically points to your backend routes.
-const api = axios.create({
-  baseURL: "/api",
-  withCredentials: true, // allows cookies (important for auth sessions)
+// 👉 Use environment variable, fallback to localhost
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+  withCredentials: true,
 });
 
-// =======================
-// 🔹 User Authentication
-// =======================
+// ========== AUTH ==========
+export const callRegisterUserApi = async (formData) => {
+  const response = await API.post("/user/register", formData);
+  return response?.data;
+};
 
-// Register user
-export const registerUser = (userData) => api.post("/users/register", userData);
+export const callLoginUserApi = async (formData) => {
+  const response = await API.post("/user/login", formData);
+  return response?.data;
+};
 
-// Login user
-export const loginUser = (userData) => api.post("/users/login", userData);
+export const callUserAuthApi = async () => {
+  const response = await API.get("/user/auth"); // GET better for auth check
+  return response?.data;
+};
 
-// Check if authenticated
-export const checkAuth = () => api.get("/users/auth");
+export const callLogoutApi = async () => {
+  const response = await API.post("/user/logout");
+  return response?.data;
+};
 
-// Logout user
-export const logoutUser = () => api.post("/users/logout");
+// ========== TASKS ==========
+export const addNewTaskApi = async (formData) => {
+  const response = await API.post("/task/add-new-task", formData);
+  return response?.data;
+};
 
-// =======================
-// 🔹 Task Management
-// =======================
+export const getAllTasksApi = async (getCurrentUserId) => {
+  const response = await API.get(`/task/get-all-tasks-by-userid/${getCurrentUserId}`);
+  return response?.data;
+};
 
-// Get all tasks
-export const getTasks = () => api.get("/tasks");
+export const updateTaskApi = async (formData) => {
+  const response = await API.put("/task/update-task", formData);
+  return response?.data;
+};
 
-// Create new task
-export const createTask = (taskData) => api.post("/tasks", taskData);
-
-// Update a task
-export const updateTask = (taskId, updatedData) =>
-  api.put(`/tasks/${taskId}`, updatedData);
-
-// Delete a task
-export const deleteTask = (taskId) => api.delete(`/tasks/${taskId}`);
+export const deleteTaskApi = async (getCurrentTaskId) => {
+  const response = await API.delete(`/task/delete-task/${getCurrentTaskId}`);
+  return response?.data;
+};
