@@ -1,41 +1,39 @@
-// server.js
-const express = require("express");
-const app = express();
-const mongoose = require("mongoose");
-const path = require("path");
-const cors = require("cors");
-require("dotenv").config();
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import Task from "./pages/Task";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import { saveProfile } from "./redux/actions/authActions";
+import NotFound from "./pages/NotFound";
 
-// Import routes
-const authRoutes = require("./routes/authRoutes");
-const taskRoutes = require("./routes/taskRoutes");
-const profileRoutes = require("./routes/profileRoutes");
+function App() {
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+  const authState = useSelector(state => state.authReducer);
+  const dispatch = useDispatch();
 
-// MongoDB connection
-const mongoUrl = process.env.MONGODB_URL;
-mongoose.connect(mongoUrl)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch((err) => console.error("❌ MongoDB connection failed:", err));
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    dispatch(saveProfile(token));
+  }, [authState.isLoggedIn, dispatch]);
 
-// API routes
-app.use("/api/auth", authRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/profile", profileRoutes);
 
-// Serve frontend build in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.resolve(__dirname, "../frontend/build")));
-  app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"))
+  return (
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={authState.isLoggedIn ? <Navigate to="/" /> : <Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/tasks/add" element={authState.isLoggedIn ? <Task /> : <Navigate to="/login" state={{ redirectUrl: "/tasks/add" }} />} />
+          <Route path="/tasks/:taskId" element={authState.isLoggedIn ? <Task /> : <Navigate to="/login" state={{ redirectUrl: window.location.pathname }} />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 
-// Start server
-const port = process.env.PORT || 6000;
-app.listen(port, () => {
-  console.log(`🚀 Backend running on port ${port}`);
-});
+export default App;
