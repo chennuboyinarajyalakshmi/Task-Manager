@@ -10,29 +10,22 @@ const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 
-// ✅ Updated CORS settings
-app.use(cors({
-  origin: [
-    "http://localhost:3000", // for local testing
-    "https://task-manager-fw0xhcis0-rajyalakshmi-chennuboyinas-projects.vercel.app" // your Vercel frontend URL
-  ],
-  credentials: true
-}));
-
 // Middleware
 app.use(express.json());
+app.use(cors());
 
 // Connect MongoDB
-mongoose.connect(process.env.MONGODB_URL)
-  .then(() => console.log("✅ MongoDB connected..."))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+mongoose.connect(process.env.MONGODB_URL, err => {
+  if (err) throw err;
+  console.log("MongoDB connected...");
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/profile", profileRoutes);
 
-// Serve frontend in production (optional for local build)
+// Serve frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.resolve(__dirname, "../frontend/build")));
   app.get("*", (req, res) =>
@@ -42,4 +35,4 @@ if (process.env.NODE_ENV === "production") {
 
 // Start server
 const port = process.env.PORT || 6000;
-app.listen(port, () => console.log(`🚀 Backend running on port ${port}`));
+app.listen(port, () => console.log(`Backend running on port ${port}`));
